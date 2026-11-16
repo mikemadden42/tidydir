@@ -6,60 +6,63 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          [
-            ubuntu-22.04,
-            ubuntu-24.04,
-            windows-2025,
-            windows-2022,
-            macos-26,
-            macos-15,
-            macos-14,
-          ]
-        toolchain: [stable, beta, nightly]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        toolchain: [stable]
+        include:
+          - os: ubuntu-latest
+            toolchain: beta
+          - os: ubuntu-latest
+            toolchain: nightly
     steps:
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v5
+      - name: Install ${{ matrix.toolchain }} toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-          override: true
-      - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --locked
         continue-on-error: ${{ matrix.toolchain != 'stable' }}
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test --verbose --locked
         continue-on-error: ${{ matrix.toolchain != 'stable' }}
+
+  msrv:
+    name: msrv (ubuntu-latest, 1.58.1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install 1.58.1 toolchain
+        uses: dtolnay/rust-toolchain@1.58.1
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --verbose --locked
+      - name: Run tests
+        run: cargo test --verbose --locked
 
   clippy:
     name: clippy (ubuntu-latest, stable)
     runs-on: ubuntu-latest
     steps:
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v5
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
           components: clippy
-      - name: Checkout sources
-        uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v2
       - name: Cargo Clippy
-        run: cargo clippy -- -D warnings -A deprecated
+        run: cargo clippy --all-targets -- -D warnings
 
   fmt:
     name: fmt (ubuntu-latest, stable)
     runs-on: ubuntu-latest
     steps:
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v5
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
           components: rustfmt
-      - name: Checkout sources
-        uses: actions/checkout@v3
       - name: Check Formatting
         run: cargo fmt --all -- --check
