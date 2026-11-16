@@ -2,5 +2,9 @@
 name = "tidydir"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.58"
+description = "Tidy up your home directory by filing loose files into Documents/<extension>/"
+license = "MIT"
+repository = "https://github.com/mikemadden42/tidydir"
 
 [dependencies]
